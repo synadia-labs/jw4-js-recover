@@ -1,21 +1,29 @@
-# js-store-recover
+# jw4-js-recover
 
-Prepare a JetStream store for standalone recovery after Raft quorum loss.
+**EXPERIMENTAL -- FOR EDUCATIONAL PURPOSES ONLY**
 
-When a NATS cluster loses a majority of its nodes (e.g., 2-of-3 region failure), the surviving replicas' data exists on disk but is inaccessible through JetStream. This tool prepares the store so a standalone NATS server can load it, enabling `nats account backup` to extract the data for restore to a fresh cluster.
+This tool is not supported by Synadia. It relies on internal NATS server
+implementation details that may change without notice. Do not use in
+production without understanding the risks and limitations described below.
 
-**This is not a supported recovery procedure.** It works with the current NATS server implementation but may break with future versions.
+## What it does
+
+When a NATS cluster loses Raft quorum (e.g., 2-of-3 region failure), the
+surviving replicas' data exists on disk but is inaccessible through
+JetStream. This tool prepares the store so a standalone NATS server can
+load it, enabling `nats account backup` to extract the data for restore
+to a fresh cluster.
 
 ## Install
 
 ```bash
-go install github.com/synadia-io/js-store-recover@latest
+go install github.com/synadia-labs/jw4-js-recover@latest
 ```
 
 ## Usage
 
 ```
-js-store-recover <command> [arguments]
+jw4-js-recover <command> [arguments]
 
 Commands:
   prepare <store-dir>   Edit stream metafiles for standalone recovery
@@ -31,7 +39,7 @@ Commands:
 cp -a /var/nats/jetstream /tmp/recovery/store
 
 # 2. Prepare for standalone loading
-js-store-recover prepare /tmp/recovery/store
+jw4-js-recover prepare /tmp/recovery/store
 
 # 3. Start a standalone NATS server (no cluster block)
 nats-server -c recovery.conf  # store_dir points to /tmp/recovery/store
@@ -43,9 +51,7 @@ nats account backup /tmp/recovery/backup -f
 nats stream restore /tmp/recovery/backup/STREAM_NAME --replicas N
 ```
 
-## What it does
-
-The `prepare` command:
+## What `prepare` does
 
 1. Finds all stream `meta.inf` files under the store directory
 2. Sets `num_replicas` to 1 (standalone servers reject replicas > 1)
@@ -60,6 +66,14 @@ The `inspect` command shows stream metadata (name, replicas, account, placement,
 - Does not handle encrypted JetStream stores. If `jetstream { key: "..." }` is configured, start the standalone server with the same key instead.
 - Validated with limits-based retention only. Interest and work-queue retention streams may lose messages during standalone recovery.
 - Consumer positions may lag 2-3 minutes behind the true state at the time of failure.
+- Not tested with JWT/operator mode accounts, supercluster topologies, or source/mirror streams.
+
+## Disclaimer
+
+This tool is provided as-is for educational and experimental use. It
+manipulates internal NATS JetStream storage files in ways that are not
+part of any supported API or recovery procedure. The authors and Synadia
+Communications assume no liability for data loss resulting from its use.
 
 ## License
 

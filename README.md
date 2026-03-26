@@ -1,4 +1,4 @@
-# jw4-js-recover
+# js-recover
 
 **EXPERIMENTAL -- FOR EDUCATIONAL PURPOSES ONLY**
 
@@ -17,13 +17,13 @@ to a fresh cluster.
 ## Install
 
 ```bash
-go install github.com/synadia-labs/jw4-js-recover@latest
+go install github.com/synadia-labs/jw4-js-recover/cmd/js-recover@latest
 ```
 
 ## Usage
 
 ```
-jw4-js-recover <command> [arguments]
+js-recover <command> [arguments]
 
 Commands:
   prepare <store-dir>   Edit stream metafiles for standalone recovery
@@ -39,7 +39,7 @@ Commands:
 cp -a /var/nats/jetstream /tmp/recovery/store
 
 # 2. Prepare for standalone loading
-jw4-js-recover prepare /tmp/recovery/store
+js-recover prepare /tmp/recovery/store
 
 # 3. Start a standalone NATS server (no cluster block)
 nats-server -c recovery.conf  # store_dir points to /tmp/recovery/store

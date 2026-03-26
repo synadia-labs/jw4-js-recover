@@ -29,7 +29,7 @@ func main() {
 	switch os.Args[1] {
 	case "prepare":
 		if len(os.Args) < 3 {
-			fmt.Fprintf(os.Stderr, "usage: jw4-js-recover prepare <store-dir>\n")
+			fmt.Fprintf(os.Stderr, "usage: js-recover prepare <store-dir>\n")
 			os.Exit(1)
 		}
 		if err := prepare(os.Args[2]); err != nil {
@@ -38,7 +38,7 @@ func main() {
 		}
 	case "inspect":
 		if len(os.Args) < 3 {
-			fmt.Fprintf(os.Stderr, "usage: jw4-js-recover inspect <store-dir>\n")
+			fmt.Fprintf(os.Stderr, "usage: js-recover inspect <store-dir>\n")
 			os.Exit(1)
 		}
 		if err := inspect(os.Args[2]); err != nil {
@@ -46,7 +46,7 @@ func main() {
 			os.Exit(1)
 		}
 	case "version":
-		fmt.Printf("jw4-js-recover %s\n", version)
+		fmt.Printf("js-recover %s\n", version)
 	case "help", "-h", "--help":
 		usage()
 	default:
@@ -57,7 +57,7 @@ func main() {
 }
 
 func usage() {
-	fmt.Fprintf(os.Stderr, `jw4-js-recover - Prepare a JetStream store for standalone recovery
+	fmt.Fprintf(os.Stderr, `js-recover - Prepare a JetStream store for standalone recovery
 
 EXPERIMENTAL -- FOR EDUCATIONAL PURPOSES ONLY
 This tool is not supported by Synadia. It relies on internal NATS server
@@ -69,7 +69,7 @@ tool prepares the store for loading by a standalone NATS server, enabling
 a backup to be taken via "nats account backup".
 
 Usage:
-  jw4-js-recover <command> [arguments]
+  js-recover <command> [arguments]
 
 Commands:
   prepare <store-dir>   Edit stream metafiles for standalone recovery
@@ -88,7 +88,7 @@ Example:
   cp -a /var/nats/jetstream /tmp/recovery/store
 
   # Prepare for standalone loading
-  jw4-js-recover prepare /tmp/recovery/store
+  js-recover prepare /tmp/recovery/store
 
   # Start standalone server with store_dir pointing to /tmp/recovery/store
   # Then: nats account backup /tmp/recovery/backup -f

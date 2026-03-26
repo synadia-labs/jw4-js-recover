@@ -77,21 +77,45 @@ Commands:
   version               Print version
   help                  Print this message
 
+The <store-dir> argument is the nats-server store_dir (the directory that
+contains the "jetstream/" subdirectory). You can also pass the jetstream/
+subdirectory directly.
+
 The prepare command:
   1. Finds all stream meta.inf files under <store-dir>
   2. Sets num_replicas to 1 and removes placement constraints
   3. Recomputes the meta.sum checksum (highway hash 64-bit)
   4. Removes Raft metadata (_js_/ directories and $SYS account)
 
-Example:
-  # Copy the surviving store
-  cp -a /var/nats/jetstream /tmp/recovery/store
+The inspect command lists each stream's name, replica count, account,
+placement, and encryption status without modifying anything. Run it before
+prepare to review the store contents.
 
-  # Prepare for standalone loading
-  js-recover prepare /tmp/recovery/store
+Recovery workflow:
 
-  # Start standalone server with store_dir pointing to /tmp/recovery/store
-  # Then: nats account backup /tmp/recovery/backup -f
+  # 1. Copy the jetstream/ subdirectory from the surviving node's store_dir
+  cp -a /var/nats/jetstream /tmp/recovery/jetstream
+
+  # 2. Inspect the store to see what streams exist
+  js-recover inspect /tmp/recovery
+
+  # 3. Prepare the store for standalone loading
+  js-recover prepare /tmp/recovery
+
+  # 4. Start a standalone nats-server (no cluster or gateway config)
+  nats-server --jetstream --store_dir /tmp/recovery --addr 127.0.0.1 --port 4222
+
+  # 5. Back up all streams from the standalone server
+  nats account backup /tmp/backup -f
+
+  # 6. Restore each stream to the new cluster
+  nats stream restore /tmp/backup/STREAM_NAME --replicas 3
+
+Limitations:
+  - Does not handle encrypted stores (jetstream { key: "..." }).
+    Start the standalone server with the same key instead.
+  - Interest/work-queue retention streams may lose messages during recovery.
+  - Consumer ack state may lag 2-3 minutes behind the time of failure.
 `)
 }
 

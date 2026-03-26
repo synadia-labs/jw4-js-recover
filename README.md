@@ -32,23 +32,32 @@ Commands:
   help                  Print help
 ```
 
+The `<store-dir>` argument is the nats-server `store_dir` (the parent of the `jetstream/` subdirectory). You can also pass the `jetstream/` subdirectory directly.
+
 ## Recovery procedure
 
 ```bash
-# 1. Copy the surviving JetStream store
-cp -a /var/nats/jetstream /tmp/recovery/store
+# 1. Copy the jetstream/ subdirectory from the surviving node's store_dir.
+cp -a /var/nats/jetstream /tmp/recovery/jetstream
 
-# 2. Prepare for standalone loading
-js-recover prepare /tmp/recovery/store
+# 2. Inspect the store to review streams before modifying anything.
+js-recover inspect /tmp/recovery
 
-# 3. Start a standalone NATS server (no cluster block)
-nats-server -c recovery.conf  # store_dir points to /tmp/recovery/store
+# 3. Prepare the store for standalone loading.
+#    This sets replicas to 1, removes placement, recomputes checksums,
+#    and removes Raft metadata so a standalone server can load the data.
+js-recover prepare /tmp/recovery
 
-# 4. Take a backup
-nats account backup /tmp/recovery/backup -f
+# 4. Start a standalone nats-server pointing at the prepared store.
+#    No cluster, gateway, or leafnode config. Just JetStream with the store_dir.
+nats-server --jetstream --store_dir /tmp/recovery --addr 127.0.0.1 --port 4222
 
-# 5. Restore to fresh cluster
-nats stream restore /tmp/recovery/backup/STREAM_NAME --replicas N
+# 5. Back up all streams from the standalone server.
+nats account backup /tmp/backup -f
+
+# 6. Restore each stream to the new production cluster.
+#    Use --replicas to set the desired replica count on the new cluster.
+nats stream restore /tmp/backup/STREAM_NAME --replicas 3
 ```
 
 ## What `prepare` does
